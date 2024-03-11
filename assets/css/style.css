@@ -1,0 +1,51 @@
+:root {
+    --dgreen: #191A19;
+    --swhite: #F2F2F2;
+    --dgray: #444544;
+}
+* {
+    font-family: 'Poppins', sans-serif;
+
+}
+
+body {
+    background-color: var(--dgray);
+    color: var(--swhite);
+    
+}
+
+header {
+    background-color: var(--dgreen);
+    border-bottom: 3px solid var(--swhite);
+    color: var(--swhite);
+}
+
+main {
+    background-color: var(--dgreen);
+    border: 3px solid var(--swhite);
+}
+
+.card {
+    background-color: var(--dgray);
+    color: var(--swhite);
+    border: 1px solid var(--swhite);
+}
+
+#dropdownList {
+    background-color: var(--dgreen);
+    border: 3px solid var(--swhite);
+}
+
+.dropdown-item {
+    color: var(--swhite);
+}
+
+.btn-secondary {
+    background-color: var(--dgray);
+}
+
+.form-control {
+    background-color: var(--dgreen);
+    border: 1px solid var(--dgray);
+    color: var(--swhite);
+}
