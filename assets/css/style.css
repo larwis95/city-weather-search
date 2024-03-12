@@ -49,3 +49,8 @@ main {
     border: 1px solid var(--dgray);
     color: var(--swhite);
 }
+
+#currentWeatherCard {
+    background-color: transparent;
+    border: none;
+}

@@ -15,33 +15,30 @@
 </head>
 <body>
     <header class="p-2 mb-2 text-center">
-        <h1 class="display-3">Global Weather Search</h1>
-        <p class="lead">Search for weather and 5-day forecast by city.</p>
+        <h1 class="display-3">US Weather Search</h1>
+        <p class="lead">Search for weather and 5-day forecast by US major city.</p>
       </header>
       <main class="container my-3">
         <div class="row my-3">
-          <div id="hissearch" class="col-3">
+          <div id="hissearch" class="col-3 border border-white">
             <form id="searchForm">
               <div>
                 <label for="searchCity" class="form-label align-baseline">Search City</label>
-                <input type="text" class="form-control align-baseline"></input>
+                <input type="text" class="form-control align-baseline mb-1" id="searchCity" required></input>
               </div>
             </form>
             <div class="dropdown">
-              <button class="btn btn-secondary dropdown-toggle mb-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <button class="btn btn-secondary dropdown-toggle mb-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 Search History
               </button>
               <ul class="dropdown-menu" id="dropdownList">
-                <li><a class="dropdown-item" href="#">Action</a></li>
-                <li><a class="dropdown-item" href="#">Another action</a></li>
-                <li><a class="dropdown-item" href="#">Something else here</a></li>
               </ul>
             </div>
           </div>
           <div id="cardContainer" class="col-9">
             <div class="row justify-content-center m-3" id="todayWeather">
               <div class="card text-bg-dark">
-                  <img src="https://images.fineartamerica.com/images/artworkimages/mediumlarge/2/detroit-skyline-linda-goodhue-photography.jpg" class="card-img" alt="...">
+                  <img src="https://images.fineartamerica.com/images/artworkimages/mediumlarge/2/detroit-skyline-linda-goodhue-photography.jpg" class="card-img" alt="..." id="cardImg">
                 <div class="card-img-overlay">
                   <h5 class="card-title">Card title</h5>
                   <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
