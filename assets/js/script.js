@@ -7,11 +7,13 @@ const searchForm = $('#searchForm');
 const hisBtn = $('button')
 const weatherKey = '458a573eccf3afd70e16d5cf44ac4e90';
 const googleKey = 'AIzaSyDnQrwimq5N9fmNE5_U78isjLduxYvsc6Y';
+let renderImg = [true, true];
 let forecastUrl;
 let todayUrl;
 let imageUrl;
 let savedCity;
 let savedHistory = [];
+
 const weatherTypes = {
     sunny: '☀',
     cloudy: '☁',
@@ -32,15 +34,20 @@ class api {
             case('forecast'):
                 fetch(this.url)
                     .then((response) => {
-                    return response.json();
-            })
+                        if (response.status === 404) {
+                            renderImg[1] = false;
+                        return;
+                    } else {
+                        renderImg[1] = true;
+                        return response.json();
+                    };
+                    })
                     .then((forecastData) => {
                         //renderForeCast(forecastData);
                     return;
                         
-            })
+                    })
                     .catch(error => {
-                        alert(`Error in forecast weather api call: most likely unknown city name.`);
                         console.log(error);
                     return;
             })
@@ -49,14 +56,29 @@ class api {
             case ('today'):
                 fetch(this.url)
                     .then((response) => {
-                    return response.json();
+                        if (response.status === 404) {
+                            alert(`${lastCity} not found for search`);
+                            savedHistory.shift();
+                            console.log(savedHistory)
+                            savedCity = savedHistory[0];
+                            localStorage.setItem('cityHistory', JSON.stringify(savedHistory));
+                            localStorage.setItem('lastCity', savedCity)
+                            const firstLi = $('ul > li:first-child')
+                            const searchBox = searchForm.find('input');
+                            firstLi.remove();
+                            searchBox.val('');
+                            renderImg[0] = false;
+                        return;
+                        } else {
+                            renderImg[0] = true;
+                            return response.json();
+                        }
                     })
                     .then((todayData) => {
                         renderToday(todayData);
                     return;
                     })
                     .catch(error => {
-                        alert(`Error in current weather api call: most likely unknown city name.`)
                         console.log(error);
                     return;
                     })
@@ -68,12 +90,14 @@ class api {
                         return response.json();
                     })
                     .then((imageData) => {
+                        if(renderImg[0] === true && renderImg[0] === true) {
                         console.log(imageData);
                         console.log(imageData.items[0].link);
                         const cityImg = $('#cardImg')
                         let imageSrc = imageData.items[0].link;
                         cityImg.attr('src', imageSrc);
-                        
+                        };
+                    return;
                     })
                     .catch(error => {
                         alert(`Error in img search api call: ${error}`);
@@ -87,30 +111,44 @@ class api {
 
 }
 
+const move = (from, to, array) => {
+    array.splice(to, 0, array.splice(from, 1)[0]);
+}
+
+const last = (array) => {
+    return array.length - 1;
+}
+
 function searchSubmit() {
     const searchInput = searchForm.find('input');
     let cityName = searchInput.val().toLowerCase();
     savedCity = cityName.toLowerCase();
-    let titleCityStr = cityName.toLowerCase().split(' ').map((s) => s.charAt(0).toUpperCase() + s.substring(1)).join(' ');
-    if (savedHistory.length === 10) {
+    if (savedHistory.length === 5 && savedHistory.includes(cityName) === false) {
         savedHistory.shift();
     } 
     if (savedHistory.includes(cityName) === false) {
-    hisBtn.css('visibility', 'visible');
-    hisUl.prepend(`<li class="dropdown-item"><a>${titleCityStr}</a></li>`);
-    savedHistory.push(cityName);
-    localStorage.setItem('cityHistory', JSON.stringify(savedHistory));
-    localStorage.setItem('lastCity', savedCity);
+        hisBtn.css('visibility', 'visible');
+        hisUl.prepend(`<li class="dropdown-item"><a>${cityName}</a></li>`);
+        savedHistory.push(cityName);
+        localStorage.setItem('cityHistory', JSON.stringify(savedHistory));
+        localStorage.setItem('lastCity', savedCity);
     };
+    if (savedCity.includes(cityName)) {
+        let index = savedHistory.indexOf(cityName);
+        move(index, last(savedHistory), savedHistory);
+        hisUl.empty();
+        for (let i of savedHistory.reverse()) { ; 
+            hisUl.append(`<li class="dropdown-item"><a>${i}</a></li>`);
+        }
+    }
     setUrls(cityName);
     searchInput.val('');
 }
 
-
 function setUrls(city) {
     todayUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city.replace(' ', '%20')}&appid=${weatherKey}&units=imperial`;
     forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city.replace(' ', '%20')}&appid=${weatherKey}&units=imperial`;
-    imageUrl = `https://customsearch.googleapis.com/customsearch/v1?cx=c3b00bc2bd3ae4d8d&exactTerms=${city.replace(' ', '%20')}%20city&excludeTerms=wikipedia&safe=active&searchType=image&key=${googleKey}`;
+    imageUrl = `https://customsearch.googleapis.com/customsearch/v1?cx=c3b00bc2bd3ae4d8d&exactTerms=${city.replace(' ', '%20')}&excludeTerms=wikipedia&safe=active&searchType=image&key=${googleKey}`;
     console.log(imageUrl);
     handleApiCall();
 }
@@ -119,10 +157,13 @@ function handleApiCall() {
     const todayApi = new api('today', todayUrl);
     const forecastApi = new api('forecast', forecastUrl);
     todayApi.create();
-    forecastApi.create();
 }
 
 function renderToday(data) {
+    console.log(renderImg[0])
+    if (renderImg[0] === false) {
+        return;
+    }
     todayCont.empty();
     console.log(data);
     const lowercaseCity = savedCity.toLowerCase();
@@ -140,7 +181,7 @@ function renderToday(data) {
                 </div>
                 </div>
               </div>
-    `)
+    `);
     const img = new api('image', imageUrl);
     img.create();
 }
