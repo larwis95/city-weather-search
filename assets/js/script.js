@@ -23,94 +23,66 @@ const weatherTypes = {
     someClouds: '⛅'
 };
 
-
 class api {
     constructor(type, url) {
         this.type = type;
         this.url = url;
     }
-    create() {
-        switch (this.type) {
-            case('forecast'):
-                fetch(this.url)
-                    .then((response) => {
-                        if (response.status === 404) {
-                            renderImg[1] = false;
-                        return;
-                    } else {
-                        renderImg[1] = true;
-                        return response.json();
-                    };
-                    })
-                    .then((forecastData) => {
-                        //renderForeCast(forecastData);
-                    return;
-                        
-                    })
-                    .catch(error => {
-                        console.log(error);
-                    return;
-            })
-            break;
-
-            case ('today'):
-                fetch(this.url)
-                    .then((response) => {
-                        if (response.status === 404) {
-                            alert(`${lastCity} not found for search`);
-                            savedHistory.shift();
-                            console.log(savedHistory)
-                            savedCity = savedHistory[0];
-                            localStorage.setItem('cityHistory', JSON.stringify(savedHistory));
-                            localStorage.setItem('lastCity', savedCity)
-                            const firstLi = $('ul > li:first-child')
-                            const searchBox = searchForm.find('input');
-                            firstLi.remove();
-                            searchBox.val('');
-                            renderImg[0] = false;
-                        return;
-                        } else {
-                            renderImg[0] = true;
-                            return response.json();
-                        }
-                    })
-                    .then((todayData) => {
-                        renderToday(todayData);
-                    return;
-                    })
-                    .catch(error => {
-                        console.log(error);
-                    return;
-                    })
-            break;
-
-            case ('image'):
-                fetch(this.url)
-                    .then((response) => {
-                        return response.json();
-                    })
-                    .then((imageData) => {
-                        if(renderImg[0] === true && renderImg[0] === true) {
-                        console.log(imageData);
-                        console.log(imageData.items[0].link);
-                        const cityImg = $('#cardImg')
-                        let imageSrc = imageData.items[0].link;
+ 
+    async create() {
+        try {
+            let response = await fetch(this.url);
+ 
+            if (response.status === 404) {
+                if (this.type === 'forecast') {
+                    renderImg[1] = false;
+                } else if (this.type === 'today') {
+                    alert(`${savedCity} not found for search`);
+                    const errorCity = savedHistory.indexOf(savedCity)
+                    console.log(savedHistory);
+                    savedHistory.splice(errorCity, 1);
+                    savedCity = savedHistory[savedHistory.length-1]
+                    localStorage.setItem('cityHistory', JSON.stringify(savedHistory));
+                    localStorage.setItem('lastCity', savedCity);
+                    const firstLi = $('ul > li:first-child');
+                    console.log(`first li ${firstLi}`)
+                    const searchBox = searchForm.find('input');
+                    firstLi.remove();
+                    searchBox.val('');
+                    renderImg[0] = false;
+                }
+                return;
+            }
+ 
+            let data = await response.json();
+ 
+            switch (this.type) {
+                case 'forecast':
+                    renderImg[1] = true;
+                    // renderForeCast(data);
+                    break;
+                case 'today':
+                    renderImg[0] = true;
+                    renderToday(data);
+                    break;
+                case 'image':
+                    if (renderImg[0] === true && renderImg[0] === true) {
+                        console.log(data);
+                        console.log(data.items[0].link);
+                        const cityImg = $('#cardImg');
+                        let imageSrc = data.items[0].link;
                         cityImg.attr('src', imageSrc);
-                        };
-                    return;
-                    })
-                    .catch(error => {
-                        alert(`Error in img search api call: ${error}`);
-                    })
-            break;
-            
-            default:
-            break;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        } catch (error) {
+            console.log(error);
         }
     }
-
 }
-
+ 
 const move = (from, to, array) => {
     array.splice(to, 0, array.splice(from, 1)[0]);
 }
@@ -140,6 +112,8 @@ function searchSubmit() {
         for (let i of savedHistory.reverse()) { ; 
             hisUl.append(`<li class="dropdown-item"><a>${i}</a></li>`);
         }
+        localStorage.setItem('cityHistory', JSON.stringify(savedHistory));
+        localStorage.setItem('lastCity', savedCity);
     }
     setUrls(cityName);
     searchInput.val('');
