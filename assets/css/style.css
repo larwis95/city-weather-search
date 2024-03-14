@@ -55,6 +55,6 @@ main {
     border: none;
 }
 
-a {
-    text-transform: capitalize;
+li {
+    text-transform: uppercase;
 }

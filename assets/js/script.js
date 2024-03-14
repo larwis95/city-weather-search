@@ -1,18 +1,20 @@
 const lastCity = localStorage.getItem('lastCity');
 const cityHistory = JSON.parse(localStorage.getItem('cityHistory'));
+const lastImg = localStorage.getItem('lastImg');
+const lastCoords = JSON.parse(localStorage.getItem('lastCoords'));
 const todayCont = $('#todayWeather');
 const forecastCont = $('#foreCast');
 const hisUl = $('#dropdownList');
 const searchForm = $('#searchForm');
 const hisBtn = $('button')
 const weatherKey = '458a573eccf3afd70e16d5cf44ac4e90';
-const googleKey = 'AIzaSyDnQrwimq5N9fmNE5_U78isjLduxYvsc6Y';
-let renderImg = [true, true];
 let forecastUrl;
 let todayUrl;
-let imageUrl;
 let savedCity;
-let savedHistory = [];
+let savedHistory = [[], []];
+let savedPlace;
+let savedImg;
+let coords = [];
 
 const weatherTypes = {
     sunny: '☀',
@@ -35,7 +37,6 @@ class api {
  
             if (response.status === 404) {
                 if (this.type === 'forecast') {
-                    renderImg[1] = false;
                 } else if (this.type === 'today') {
                     alert(`${savedCity} not found for search`);
                     const errorCity = savedHistory.indexOf(savedCity)
@@ -49,7 +50,6 @@ class api {
                     const searchBox = searchForm.find('input');
                     firstLi.remove();
                     searchBox.val('');
-                    renderImg[0] = false;
                 }
                 return;
             }
@@ -58,21 +58,10 @@ class api {
  
             switch (this.type) {
                 case 'forecast':
-                    renderImg[1] = true;
                     // renderForeCast(data);
                     break;
                 case 'today':
-                    renderImg[0] = true;
                     renderToday(data);
-                    break;
-                case 'image':
-                    if (renderImg[0] === true && renderImg[0] === true) {
-                        console.log(data);
-                        console.log(data.items[0].link);
-                        const cityImg = $('#cardImg');
-                        let imageSrc = data.items[0].link;
-                        cityImg.attr('src', imageSrc);
-                    }
                     break;
                 default:
                     break;
@@ -91,39 +80,77 @@ const last = (array) => {
     return array.length - 1;
 }
 
+function initAutocomplete() {
+    const searchInput = document.querySelector('#searchCity');
+    const geocoder = new google.maps.Geocoder();
+    const options = {
+            types: ['(cities)'],
+            componentRestrictions: {country: "us"}
+           };
+    console.log(searchInput);
+    const autocomplete = new google.maps.places.Autocomplete(searchInput, options);
+    autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        console.log(place);
+        console.log("autocomplete " + autocomplete)
+        savedPlace = place;
+        console.log(place);
+        geocoder
+            .geocode({placeId: savedPlace.place_id})
+                .then(({results}) => {
+                    coords = [results[0].geometry.location.lat().toFixed(2), results[0].geometry.location.lng().toFixed(2)];
+                    console.log(coords);
+                    savedImg = savedPlace.photos[0].getUrl({maxWidth: 500, maxHeight: 500});
+                    
+                })
+                .catch((e) => window.alert("Geocoder failed due to: " + e));
+    })
+
+}
+
 function searchSubmit() {
     const searchInput = searchForm.find('input');
     let cityName = searchInput.val().toLowerCase();
-    savedCity = cityName.toLowerCase();
-    if (savedHistory.length === 5 && savedHistory.includes(cityName) === false) {
-        savedHistory.shift();
+    if (savedHistory[0].length === 5 && savedHistory[0].includes(cityName) === false) {
+        savedHistory[0].shift();
+        savedHistory[1].shift();
     } 
-    if (savedHistory.includes(cityName) === false) {
+    if (savedHistory[0].includes(cityName) === false) {
         hisBtn.css('visibility', 'visible');
-        hisUl.prepend(`<li class="dropdown-item"><a>${cityName}</a></li>`);
-        savedHistory.push(cityName);
-        localStorage.setItem('cityHistory', JSON.stringify(savedHistory));
-        localStorage.setItem('lastCity', savedCity);
+        hisUl.prepend(`<li class="dropdown-item" data-placeid="${savedPlace.place_id}">${cityName}</li>`);
+        savedCity = cityName;
     };
-    if (savedCity.includes(cityName)) {
-        let index = savedHistory.indexOf(cityName);
-        move(index, last(savedHistory), savedHistory);
+    if (savedHistory[0].includes(cityName) === true) {
+        let index = savedHistory[0].indexOf(cityName);
+        debugger;
+        console.log(savedHistory[0])
+        move(index, last(savedHistory[0]), savedHistory[0]);
+        move(index, last(savedHistory[1]), savedHistory[1]);
         hisUl.empty();
-        for (let i of savedHistory.reverse()) { ; 
-            hisUl.append(`<li class="dropdown-item"><a>${i}</a></li>`);
+        const places = savedHistory[1].reverse();
+        const citiesReversed = savedHistory[0].reverse()
+        console.log(places[0])
+        for (let i = 0; i < citiesReversed.length; i++) {
+            console.log(i)
+            console.log(savedHistory[1])
+            console.log(places[i])
+            hisUl.append(`<li class="dropdown-item" data-placeId="${places[i]}"><a>${citiesReversed[i]}</a></li>`);
         }
-        localStorage.setItem('cityHistory', JSON.stringify(savedHistory));
-        localStorage.setItem('lastCity', savedCity);
+        savedCity = cityName;
     }
-    setUrls(cityName);
+    savedHistory[0].push(cityName)
+    savedHistory[1].push(savedPlace.place_id);
+    localStorage.setItem('cityHistory', JSON.stringify(savedHistory));
+    localStorage.setItem('lastCity', savedCity)
     searchInput.val('');
+    setUrls();
 }
 
-function setUrls(city) {
-    todayUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city.replace(' ', '%20')}&appid=${weatherKey}&units=imperial`;
-    forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city.replace(' ', '%20')}&appid=${weatherKey}&units=imperial`;
-    imageUrl = `https://customsearch.googleapis.com/customsearch/v1?cx=c3b00bc2bd3ae4d8d&exactTerms=${city.replace(' ', '%20')}&excludeTerms=wikipedia&safe=active&searchType=image&key=${googleKey}`;
-    console.log(imageUrl);
+function setUrls() {
+    console.log(coords);
+    todayUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${coords[0]}&lon=${coords[1]}&appid=${weatherKey}&units=imperial`;
+    forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${coords[0]}&lon=${coords[1]}&appid=${weatherKey}&units=imperial`;
+    localStorage.setItem('lastCoords', JSON.stringify(coords));
     handleApiCall();
 }
 
@@ -133,11 +160,14 @@ function handleApiCall() {
     todayApi.create();
 }
 
+function handleHistoryClick(req) {
+    const place = new google.maps.places.Places
+    // place.findPlaceFromQuery(req, () =>
+    // )
+
+}
+
 function renderToday(data) {
-    console.log(renderImg[0])
-    if (renderImg[0] === false) {
-        return;
-    }
     todayCont.empty();
     console.log(data);
     const lowercaseCity = savedCity.toLowerCase();
@@ -147,7 +177,7 @@ function renderToday(data) {
       <div class="card text-bg-dark" id="currentWeatherCard">
                   <img src="" class="card-img border border-white" alt="${city} skyline" id="cardImg">
                 <div class="card-img-overlay">
-                  <div class="card col-5 text-center">
+                  <div class="card col-6 text-center">
                     <h4 class="card-title">${city} - Today</h4>
                     <h5 class="card-text">${Math.round(data.main.temp)} °F ${weatherIcon}</h5>
                     <p class="card-text mb-0">Humidity: ${data.main.humidity}%</p>
@@ -156,8 +186,10 @@ function renderToday(data) {
                 </div>
               </div>
     `);
-    const img = new api('image', imageUrl);
-    img.create();
+    const cityImg = $('#cardImg');
+    localStorage.setItem('lastImg', savedImg);
+    cityImg.attr('src', savedImg);
+
 }
 
 function checkWeatherIcon(data) {
@@ -182,11 +214,22 @@ $(document).ready(() => {
     }
     if (lastCity !== null) {
         savedCity = lastCity;
-        setUrls(savedCity);
     }
-    console.log(savedHistory);
-    for (let i of savedHistory.reverse()) {  
-        hisUl.append(`<li class="dropdown-item"><a>${i}</a></li>`);
+    if (lastImg !== null) {
+        savedImg = lastImg;
+    }
+    if (lastCoords !== null) {
+        coords = lastCoords;
+        setUrls();
+    }
+    const places = savedHistory[1].reverse();
+    const citiesReversed = savedHistory[0].reverse()
+    console.log(places[0])
+    for (let i = 0; i < citiesReversed.length; i++) {
+        console.log(i)
+        console.log(savedHistory[1])
+        console.log(places[i])
+        hisUl.append(`<li class="dropdown-item" data-placeId="${places[i]}"><a>${citiesReversed[i]}</a></li>`);
     }
     if (hisUl.children().length === 0) {
         hisBtn.css('visibility', 'hidden');
@@ -195,8 +238,14 @@ $(document).ready(() => {
     }
     searchForm.on('submit', (event) => {
         event.preventDefault();
-        searchSubmit(event);
+        searchSubmit();
     })
- }
-)
+    hisUl.on('click', (event) => {
+        event.stopPropagation();
+        const tar = $(event.target);
+        const request = tar.val()
+        handleHistoryClick(request);
+    })
+})
+
 
