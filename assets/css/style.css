@@ -58,3 +58,7 @@ main {
 li {
     text-transform: uppercase;
 }
+
+#currentCity {
+    text-transform: uppercase;
+}
