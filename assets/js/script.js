@@ -71,15 +71,13 @@ class api {
         }
     }
 }
+
+function arraymove(arr, fromIndex, toIndex) {
+    let element = arr[fromIndex];
+    arr.splice(fromIndex, 1);
+    arr.splice(toIndex, 0, element);
+}
  
-const move = (from, to, array) => {
-    array.splice(to, 0, array.splice(from, 1)[0]);
-}
-
-const last = (array) => {
-    return array.length - 1;
-}
-
 function initAutocomplete() {
     const searchInput = document.querySelector('#searchCity');
     const geocoder = new google.maps.Geocoder();
@@ -89,6 +87,7 @@ function initAutocomplete() {
            };
     console.log(searchInput);
     const autocomplete = new google.maps.places.Autocomplete(searchInput, options);
+    
     autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
         console.log(place);
@@ -110,40 +109,44 @@ function initAutocomplete() {
 
 function searchSubmit() {
     const searchInput = searchForm.find('input');
-    let cityName = searchInput.val().toLowerCase();
-    if (savedHistory[0].length === 5 && savedHistory[0].includes(cityName) === false) {
-        savedHistory[0].shift();
-        savedHistory[1].shift();
-    } 
-    if (savedHistory[0].includes(cityName) === false) {
-        hisBtn.css('visibility', 'visible');
-        hisUl.prepend(`<li class="dropdown-item" data-placeid="${savedPlace.place_id}">${cityName}</li>`);
-        savedCity = cityName;
-    };
-    if (savedHistory[0].includes(cityName) === true) {
-        let index = savedHistory[0].indexOf(cityName);
-        debugger;
-        console.log(savedHistory[0])
-        move(index, last(savedHistory[0]), savedHistory[0]);
-        move(index, last(savedHistory[1]), savedHistory[1]);
-        hisUl.empty();
-        const places = savedHistory[1].reverse();
-        const citiesReversed = savedHistory[0].reverse()
-        console.log(places[0])
-        for (let i = 0; i < citiesReversed.length; i++) {
-            console.log(i)
-            console.log(savedHistory[1])
-            console.log(places[i])
-            hisUl.append(`<li class="dropdown-item" data-placeId="${places[i]}"><a>${citiesReversed[i]}</a></li>`);
-        }
-        savedCity = cityName;
-    }
-    savedHistory[0].push(cityName)
-    savedHistory[1].push(savedPlace.place_id);
-    localStorage.setItem('cityHistory', JSON.stringify(savedHistory));
-    localStorage.setItem('lastCity', savedCity)
+    const cityName = searchInput.val().toLowerCase();
+    savedCity = cityName;
+    updateSearchHistory(cityName);
+    updateDropDown();
+    saveToLocalStorage();
     searchInput.val('');
     setUrls();
+}
+
+function updateSearchHistory(cityName) {
+    if (savedHistory[0].length === 5 && !savedHistory[0].includes(cityName)) {
+        savedHistory[0].shift();
+        savedHistory[1].shift();
+        $('#dropdownList li:last-child').remove();
+    }
+    if (!savedHistory[0].includes(cityName)) {
+        savedHistory[0].push(cityName);
+        savedHistory[1].push(savedPlace.place_id);
+    } else {
+        const index = savedHistory[0].indexOf(cityName);
+        arraymove(savedHistory[0], index, savedHistory[0].length);
+        arraymove(savedHistory[1], index, savedHistory[1].length);
+    }
+}
+
+function updateDropDown() {
+    hisBtn.css('visibility', 'visible');
+    hisUl.empty();
+    const places = savedHistory[1].slice().reverse();
+    const citiesReversed = savedHistory[0].slice().reverse();
+    for (let i = 0; i < citiesReversed.length; i++) {
+        hisUl.append(`<li class="dropdown-item" data-placeid="${places[i]}">${citiesReversed[i]}</li>`);
+    }
+}
+
+function saveToLocalStorage() {
+    localStorage.setItem('cityHistory', JSON.stringify(savedHistory));
+    localStorage.setItem('lastCity', savedCity);
 }
 
 function setUrls() {
@@ -160,14 +163,26 @@ function handleApiCall() {
     todayApi.create();
 }
 
-function handleHistoryClick(req) {
-    const place = new google.maps.places.Places
-    // place.findPlaceFromQuery(req, () =>
-    // )
-
+function handleHistoryClick(id) {
+    const key = 'AIzaSyDAICu2uRtO8MB_8-vw03aONwaK-fVV5us'
+        fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${id}&key=${key}`)
+            .then((response) => {
+                if (response.status === 404) {
+                    alert('Place not found!');
+                    return;
+                }
+                return response.json();
+                }
+            )
+            .then ((results) => {
+                coords = [results[0].geometry.location.lat().toFixed(2), results[0].geometry.location.lng().toFixed(2)];
+                console.log(coords);
+                savedImg = savedPlace.photos[0].getUrl({maxWidth: 500, maxHeight: 500});
+                setUrls();
+            })
 }
 
-function renderToday(data) {
+function renderToday(data,) {
     todayCont.empty();
     console.log(data);
     const lowercaseCity = savedCity.toLowerCase();
@@ -178,7 +193,7 @@ function renderToday(data) {
                   <img src="" class="card-img border border-white" alt="${city} skyline" id="cardImg">
                 <div class="card-img-overlay">
                   <div class="card col-6 text-center">
-                    <h4 class="card-title">${city} - Today</h4>
+                    <h4 class="card-title" id="currentCity">${city} - Today</h4>
                     <h5 class="card-text">${Math.round(data.main.temp)} °F ${weatherIcon}</h5>
                     <p class="card-text mb-0">Humidity: ${data.main.humidity}%</p>
                     <p class="card-text">Wind Speed: ${Math.round(data.wind.speed)} mph</p>
@@ -222,14 +237,14 @@ $(document).ready(() => {
         coords = lastCoords;
         setUrls();
     }
-    const places = savedHistory[1].reverse();
-    const citiesReversed = savedHistory[0].reverse()
+    const places = savedHistory[1].slice().reverse();
+    const citiesReversed = savedHistory[0].slice().reverse()
     console.log(places[0])
     for (let i = 0; i < citiesReversed.length; i++) {
         console.log(i)
         console.log(savedHistory[1])
         console.log(places[i])
-        hisUl.append(`<li class="dropdown-item" data-placeId="${places[i]}"><a>${citiesReversed[i]}</a></li>`);
+        hisUl.append(`<li class="dropdown-item" data-placeid="${places[i]}">${citiesReversed[i]}</li>`);
     }
     if (hisUl.children().length === 0) {
         hisBtn.css('visibility', 'hidden');
@@ -243,8 +258,8 @@ $(document).ready(() => {
     hisUl.on('click', (event) => {
         event.stopPropagation();
         const tar = $(event.target);
-        const request = tar.val()
-        handleHistoryClick(request);
+        const id = tar.attr('data-placeid')
+        handleHistoryClick(id);
     })
 })
 
