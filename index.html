@@ -16,10 +16,10 @@
 <body>
     <header class="p-2 mb-2 text-center">
         <h1 class="display-3">US Weather Search</h1>
-        <p class="lead">Search for weather and 5-day forecast by US major city.</p>
+        <p class="lead">Search for weather and 5-day forecast by US city.</p>
       </header>
       <main class="container my-3">
-        <div class="row my-3">
+        <div class="row my-3 justify-content-center">
           <div id="hissearch" class="col-3 border border-white">
             <form id="searchForm">
               <div>
@@ -33,57 +33,15 @@
               </button>
               <ul class="dropdown-menu" id="dropdownList">
               </ul>
+              <p>Use the autocomplete to pick a location.</p>
             </div>
           </div>
-          <div id="cardContainer" class="col-9">
-            <div class="row justify-content-center m-3" id="todayWeather">
-              <div class="card text-bg-dark">
-                  <img src="https://images.fineartamerica.com/images/artworkimages/mediumlarge/2/detroit-skyline-linda-goodhue-photography.jpg" class="card-img" alt="..." id="cardImg">
-                <div class="card-img-overlay">
-                  <h5 class="card-title">Card title</h5>
-                  <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-                  <p class="card-text"><small>Last updated 3 mins ago</small></p>
-                </div>
-              </div>
+          <div id="cardContainer" class="col-9 mx-auto">
+          <div class="row" id="todayWeather">
+              <h2>Use the search on the left with the autocomplete feature to search for any city in the US!</h2>
           </div>
           <div class="row my-3 justify-content-center" id="foreCast">
-            <div class="col-2 card text-bg-dark mb-3" style="max-width: 18rem;">
-              <div class="card-header">Header</div>
-              <div class="card-body">
-                <h5 class="card-title">Dark card title</h5>
-                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-              </div>
-            </div>
-            <div class="col-2 card text-bg-dark mb-3" style="max-width: 18rem;">
-              <div class="card-header">Header</div>
-              <div class="card-body">
-                <h5 class="card-title">Dark card title</h5>
-                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-              </div>
-            </div>
-            <div class="col-2 card text-bg-dark mb-3" style="max-width: 18rem;">
-              <div class="card-header">Header</div>
-              <div class="card-body">
-                <h5 class="card-title">Dark card title</h5>
-                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-              </div>
-            </div>
-              <div class="col-2 card text-bg-dark mb-3" style="max-width: 18rem;">
-              <div class="card-header">Header</div>
-              <div class="card-body">
-                <h5 class="card-title">Dark card title</h5>
-                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-              </div>
-            </div>
-            <div class="col-2 card text-bg-dark mb-3" style="max-width: 18rem;">
-              <div class="card-header">Header</div>
-              <div class="card-body">
-                <h5 class="card-title">Dark card title</h5>
-                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-              </div>
-            </div>
-
-          </div>
+        </div>
         </div>
       </div>
         
