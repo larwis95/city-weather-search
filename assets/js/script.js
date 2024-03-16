@@ -25,17 +25,18 @@ const weatherTypes = {
     someClouds: '⛅'
 };
 
+//class to handle open weather api calls
 class api {
     constructor(type, url) {
         this.type = type;
         this.url = url;
     }
  
-    async call() {
+    async call() { //using an async method instead of regular fetch call
         try {
-            let response = await fetch(this.url);
+            let response = await fetch(this.url); //uses the url of the type of call we used
  
-            if (response.status === 404) {
+            if (response.status === 404) { //if the call fails do this
                 if (this.type === 'forecast') {
                 } 
                 else if (this.type === 'today') {
@@ -56,9 +57,8 @@ class api {
  
             let data = await response.json();
  
-            switch (this.type) {
+            switch (this.type) {  //uses a switch function to render based on the type of call
                 case 'forecast':
-                    console.log(data);
                     renderForeCast(data);
                     // renderForeCast(data);
                     break;
@@ -74,13 +74,13 @@ class api {
     }
 }
 
-function arraymove(arr, fromIndex, toIndex) {
+function arraymove(arr, fromIndex, toIndex) { //a function to move a value in an array from one index to another without modifying the order of the other values
     let element = arr[fromIndex];
     arr.splice(fromIndex, 1);
     arr.splice(toIndex, 0, element);
 }
  
-function initAutocomplete() {
+function initAutocomplete() {  //intial function to setip our autocomplete feature using the google places api
     const searchInput = document.querySelector('#searchCity');
     const options = {
             types: ['(cities)'],
@@ -92,7 +92,6 @@ function initAutocomplete() {
         const place = autocomplete.getPlace();
         savedPlace = place;
         const objLength = Object.keys(savedPlace).length
-        console.log(objLength);
         if (objLength > 1) { 
             savedImg = savedPlace.photos[0].getUrl();
             localStorage.setItem('lastImg', savedImg);
@@ -100,17 +99,15 @@ function initAutocomplete() {
         } else {
             return;
         }
-        })
+    })
 }
 
-function getCoordinates(place) {
-    console.log(place);
+function getCoordinates(place) {  //function to retrieve the coordinates from the data of the google places api
     coords = [place.geometry.location.lat().toFixed(2), place.geometry.location.lng().toFixed(2)];
 }
 
-function searchSubmit() {
+function searchSubmit() {  //function we call when we submit our search query on the website
     const searchInput = searchForm.find('input');
-    console.log(savedPlace.length)
     const objLength = Object.keys(savedPlace).length
     if (objLength > 1) { 
         const cityName = searchInput.val().toLowerCase();
@@ -129,7 +126,7 @@ function searchSubmit() {
     }
 }
 
-function updateSearchHistory(cityName) {
+function updateSearchHistory(cityName) { //function to update our search history in local storage, and updates our arrays that hold our data we push to local storage
     if (savedHistory[0].length === 5 && !savedHistory[0].includes(cityName)) {
         savedHistory[0].shift();
         savedHistory[1].shift();
@@ -145,7 +142,7 @@ function updateSearchHistory(cityName) {
     }
 }
 
-function updateDropDown() {
+function updateDropDown() {  //updates history dropdown li's with our saved searches
     hisBtn.css('visibility', 'visible');
     hisUl.empty();
     const places = savedHistory[1].slice().reverse();
@@ -155,28 +152,27 @@ function updateDropDown() {
     }
 }
 
-function saveToLocalStorage() {
+function saveToLocalStorage() {  //saves  our search hiistory and the last city searched to local storage
     localStorage.setItem('cityHistory', JSON.stringify(savedHistory));
     localStorage.setItem('lastCity', savedCity);
 }
 
-function setUrls() {
+function setUrls() { //sets our API urls for the api calls
     todayUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${coords[0]}&lon=${coords[1]}&appid=${weatherKey}&units=imperial`;
     forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${coords[0]}&lon=${coords[1]}&appid=${weatherKey}&units=imperial`;
     handleApiCall();
 }
 
-function handleApiCall() {
+function handleApiCall() {  //function that creates our api calls
     const todayApi = new api('today', todayUrl);
     const forecastApi = new api('forecast', forecastUrl);
     todayApi.call();
     forecastApi.call();
 }
 
-function handleHistoryClick(id, tar) {
+function handleHistoryClick(id, tar) { //function that handles what happens when an item in search history is clicked, finds the google place that is referenced in the item and updates the UI to match that
     const place = new google.maps.places.PlacesService(tar);
     place.getDetails({placeId: id}, (results, PlaceServiceStatus) => {
-        console.log(results);
         savedImg = results.photos[0].getUrl();
         savedCity = results.formatted_address;
         getCoordinates(results);
@@ -185,7 +181,7 @@ function handleHistoryClick(id, tar) {
     })
 }
 
-function renderToday(data) {
+function renderToday(data) { //function that renders the current weather card
     todayCont.empty();
     const lowercaseCity = savedCity.toLowerCase();
     const city = lowercaseCity.toLowerCase().split(' ').map((s) => s.charAt(0).toUpperCase() + s.substring(1)).join(' ');
@@ -206,10 +202,9 @@ function renderToday(data) {
 
 }
 
-function renderForeCast(data) {
+function renderForeCast(data) { //function that renders the forecast cards
     const dayData = [data.list[10], data.list[18], data.list[26], data.list[34], data.list[39]];
     forecastCont.empty();
-    console.log(dayData);
     for (let i = 0; i < dayData.length; i++) {
         let day = dayjs(dayData[i].dt_txt).format('MM/DD/YYYY');
         let weatherIcon = checkWeatherIcon(dayData[i]);
@@ -228,7 +223,7 @@ function renderForeCast(data) {
     }
 }
 
-function checkWeatherIcon(data) {
+function checkWeatherIcon(data) { //function that uses our open weather API data to determine the icon to display on the cards for the weather type
     switch (data.weather[0].main) {
         case ('Drizzle'):
         case ('Mist'):
@@ -249,8 +244,7 @@ function checkWeatherIcon(data) {
     }
 }
 
-
-
+//a function that runs when the document loads sets the script data from local storage, renders our history list, and adds event handlers for the list and the search form
 $(document).ready(() => {
     if (cityHistory !== null) {
         savedHistory = cityHistory;
